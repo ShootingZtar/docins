@@ -1,6 +1,13 @@
 <?php
 echo "<ul class='pagination pull-left margin-zero mt0'>";
- 
+
+$page_url = $_SERVER['PHP_SELF'] . "?";
+foreach ($_GET as $key => $param) {
+    if ($key !== 'page') {
+        $page_url .= $key . "=" . $param . "&";
+    }
+}
+
 // first page button
 if($page>1){
  
@@ -18,7 +25,7 @@ if($page>1){
 $total_pages = ceil($total_rows / $records_per_page);
  
 // range of num links to show
-$range = 1;
+$range = 4;
  
 // display links to 'range of pages' around 'current page'
 $initial_num = $page - $range;

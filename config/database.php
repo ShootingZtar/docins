@@ -7,6 +7,7 @@ $password = "";
   
 try {
     $con = new PDO("mysql:host={$host};dbname={$db_name}", $username, $password);
+    $con->exec("set names utf8");
 }
   
 // show error
