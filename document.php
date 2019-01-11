@@ -81,10 +81,6 @@ if($data_num>0){
         $data_arr[$row['data_group_id']][$row['label_id']] = $row['data_value'];
     }
 
-    echo "<pre>";
-    print_r($data_arr);
-    echo "</pre>";
-
     // key of $data_arr may be not start by 1
     $data_key = 1;
     foreach ($data_arr as $key => $data_row) {
