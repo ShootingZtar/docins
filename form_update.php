@@ -31,116 +31,85 @@
                 $form_name = $_POST['name'];
                 $raw_name_list = $_POST['label_name'];
                 $name_list = [];
-                foreach ($raw_name_list as $l_name) {
-                    if ($l_name != '' && $l_name != NULL) {
-                        array_push($name_list, $l_name);
+                $id_list = [];
+                for ( $i=0; $i<count($raw_name_list); $i++ ) {
+                    if ($raw_name_list[$i] != '' && $raw_name_list[$i] != NULL) {
+                        array_push($name_list, $raw_name_list[$i]);
                     }
                 }
 
-                if ($form_name !== '' && count($name_list) > 0) {
-                    $query = "UPDATE form SET form_name = ? WHERE form_id = ?";
-                    $stmt = $con->prepare( $query );
-                    $stmt->bindParam(1, $form_name);
-                    $stmt->bindParam(2, $id);
-                    try {
-                        $stmt->execute();
-                    } catch (PDOException $exception) {
-                        die('ERROR: ' . $exception->getMessage());
-                    }
+                $query = "SELECT label_name FROM label WHERE form_id = ? ORDER BY label_order ASC";
+                $stmt = $con->prepare( $query );
+                $stmt->bindParam(1, $id);
+                try {
+                    $stmt->execute();
+                } catch (PDOException $exception) {
+                    die('ERROR: ' . $exception->getMessage());
+                }
+                $old_name_list = [];
+                for ($i=0; $row = $stmt->fetch(PDO::FETCH_ASSOC); $i++) {
+                    array_push($old_name_list, $row['label_name']);
+                }
 
-                    $id_list = $_POST['label_id'];
-                    // $name_list = $_POST['label_name'];
+                if ($old_name_list === $name_list) {
+                    echo '<META HTTP-EQUIV="Refresh" CONTENT="0;URL=index.php?action=update">';
+                } else {
+                    if ($form_name !== '' && count($name_list) > 0) {
+                        $query = "UPDATE form SET form_name = ? WHERE form_id = ?";
+                        $stmt = $con->prepare( $query );
+                        $stmt->bindParam(1, $form_name);
+                        $stmt->bindParam(2, $id);
+                        try {
+                            $stmt->execute();
+                        } catch (PDOException $exception) {
+                            die('ERROR: ' . $exception->getMessage());
+                        }
 
-                    try {
                         $query = "SELECT label_id, label_order FROM label WHERE form_id = ? ORDER BY label_id DESC";
                         $stmt = $con->prepare( $query );
                         $stmt->bindParam(1, $id);
-                        $stmt->execute();
-                    } catch (PDOException $exception) {
-                        die('ERROR: ' . $exception->getMessage());
-                    }
-                    $old_count = $stmt->rowCount();
-                    $old_last_row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                    $last_order = intval($old_last_row['label_order']);
-
-                    // update exist rows equal or less than new 
-                    $update_count = ($old_count < count($name_list))? $old_count : count($name_list);
-                    for ($i=0; $i<$update_count; $i++) {
-                        try{
-                            $query = "UPDATE label SET label_name = :name, label_order = :order, label_last_modified = :time WHERE label_id = :id";
-                            $stmt = $con->prepare($query);
-                            $name = htmlspecialchars(strip_tags($name_list[$i]));
-                            $order = $i + 1;
-                            $time = date("Y-m-d H:i:s");
-                            $label_id = $id_list[$i];
-
-                            $stmt->bindParam(':name', $name);
-                            $stmt->bindParam(':order', $order);
-                            $stmt->bindParam(':time', $time);
-                            $stmt->bindParam(':id', $id_list[$i]);
-
-                            $stmt->execute();
-                        } catch (PDOException $exception) {
-                            die('ERROR: ' . $exception->getMessage());
-                        }
-                    }
-
-                    // if new data rows less than existing, delete excess
-                    if ($old_count > count($name_list)) {
                         try {
-                            $in  = str_repeat('?, ', count($id_list) - 1) . '?';
-                            $query = "SELECT label_id FROM label WHERE form_id = ? AND label_id NOT IN ($in)";
-                            $stmt = $con->prepare( $query );
-                            $stmt->bindParam(1, $id);
-                            for ($i=2; $i<count($id_list)+2 ;$i++) {
-                                $stmt->bindParam($i, $id_list[$i-2]);
-                            }
                             $stmt->execute();
-
                         } catch (PDOException $exception) {
                             die('ERROR: ' . $exception->getMessage());
                         }
-                        $delete_count = $stmt->rowCount();
-                        $in  = str_repeat('?, ', $delete_count - 1) . '?';
-                        $query = "DELETE FROM label WHERE label_id IN ($in)";
+                        $old_count = $stmt->rowCount();
+                        $old_last_row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                        $last_order = intval($old_last_row['label_order']);
+
+                        $query = "DELETE FROM label WHERE form_id = ?";
                         $delete_stmt = $con->prepare( $query );
-                        for ($i=1; $row = $stmt->fetch(PDO::FETCH_ASSOC); $i++) {
-                            $delete_stmt->bindParam($i, $row['label_id'], PDO::PARAM_INT);
-                        }
+                        $delete_stmt->bindParam(1, $id);
                         try {
                             $delete_stmt->execute();
                         } catch (PDOException $exception) {
                             die('ERROR: ' . $exception->getMessage());
                         }
-                    }
 
-                    // if new data rows more than existing, insert new record(s)
-                    if ($old_count < count($name_list)) {
+                        $order_arr = [];
+                        $question_marks = str_repeat('( ?, ?, ? ), ', count($name_list)-1) . '( ?, ?, ? )';
+                        $query = "INSERT INTO label (form_id, label_name, label_order) VALUE $question_marks";
+                        $stmt = $con->prepare( $query );
+                        for ($i=0; $i<count($name_list); $i++) {
+                            array_push($order_arr, $i+1);
+                            $form_id_param_index = ( $i * 3 ) + 1;
+                            $label_name_param_index = ( $i * 3 ) + 2;
+                            $label_order_param_index = ( $i * 3 ) + 3;
+
+                            $stmt->bindParam($form_id_param_index, $id);
+                            $stmt->bindParam($label_name_param_index, $name_list[$i]);
+                            $stmt->bindParam($label_order_param_index, $order_arr[$i]);
+                        }
                         try {
-                            $order_arr = [];
-                            $question_marks = str_repeat('( ?, ?, ? ), ', count($name_list)-$old_count-1) . '( ?, ?, ? )';
-                            $query = "INSERT INTO label (form_id, label_name, label_order) VALUE $question_marks";
-                            $stmt = $con->prepare( $query );
-                            for ($i=$update_count; $i<count($name_list); $i++) {
-                                array_push($order_arr, $i+1);
-                                // $query = "INSERT INTO label SET form_id=:form_id, label_name=:label_name, label_order=:label_order";
-                                $form_id_param_index = ( ( $i - $update_count ) * 3 ) + 1;
-                                $label_name_param_index = ( ( $i - $update_count ) * 3 ) + 2;
-                                $label_order_param_index = ( ( $i - $update_count ) * 3 ) + 3;
-
-                                $stmt->bindParam($form_id_param_index, $id);
-                                $stmt->bindParam($label_name_param_index, $name_list[$i]);
-                                $stmt->bindParam($label_order_param_index, $order_arr[$i-$update_count]);
-                            }
                             $stmt->execute();
                         } catch (PDOException $exception) {
                             die('ERROR: ' . $exception->getMessage());
                         }
+                        echo '<META HTTP-EQUIV="Refresh" CONTENT="0;URL=index.php?action=update">';
+                    } else {
+                        echo "<div class='alert alert-danger'>Form name can't be blank and should have at least 1 column with data filled.</div>";
                     }
-                    echo '<META HTTP-EQUIV="Refresh" CONTENT="0;URL=index.php?action=update">';
-                } else {
-                    echo "<div class='alert alert-danger'>Form name can't be blank and should have at least 1 column with data filled.</div>";
                 }
 
             }
@@ -155,7 +124,7 @@
                 
                 $name = $row['form_name'];
 
-                $query = "SELECT * FROM label WHERE form_id = ? ORDER BY label_order";
+                $query = "SELECT label_name FROM label WHERE form_id = ? ORDER BY label_order";
                 $stmt = $con->prepare( $query );
                 $stmt->bindParam(1, $id);
                 $stmt->execute();
@@ -166,7 +135,6 @@
                 $v_count = 0;
                 for ($i=1; $row = $stmt->fetch(PDO::FETCH_ASSOC); $i++) {
                     $v_obj = new stdClass();
-                    $v_obj->id = $row['label_id'];
                     $v_obj->text = $row['label_name'];
                     array_push($v_arr, $v_obj);
                     $v_count = $i;
@@ -190,7 +158,6 @@
                         # {{ index + 1  }}
                     </td>
                     <td>
-                        <input type='hidden' name='label_id[]' v-model="row.id" class='form-control' />
                         <input type='text' name='label_name[]' v-model="row.text" class='form-control' />
                     </td>
                     <td>
@@ -234,7 +201,6 @@
             methods: {
                 addRow () {
                     this.rows.push({
-                        id: '',
                         text: ''
                     })
                     if (this.rows.length > 1) {
