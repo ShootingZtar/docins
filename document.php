@@ -1,9 +1,12 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document - Final Form</title>
      
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="lib/css/bootstrap.css"/>
     <link rel="stylesheet" href="lib/css/style.css"/>
  
 </head>
@@ -87,11 +90,17 @@ if($data_num>0){
         echo "<tr>";
             echo "<td>{$data_key}</td>";
             foreach ($order_arr as $order_id) {
-                echo "<td>{$data_row[$order_id]}</td>";
+                echo "<td>";
+                    if (!empty($data_row[$order_id])) {
+                        echo $data_row[$order_id]; 
+                    // } else {
+                    //     echo '';
+                    }
+                echo "</td>";
             }
             echo "<td>";
                 if ($data_row['status'] == 1) {
-                    echo "<a href='read_one.php?id={$key}' class='btn btn-info m-r-1em'>Manage</a>";
+                    echo "<a href='#' class='btn btn-info m-r-1em'>Do something</a>";
                     echo "<a href='form_update.php?id={$key}' class='btn btn-primary m-r-1em'>Edit</a>";
                     echo "<a href='#' onclick='delete_doc({$key}, {$id});'  class='btn btn-danger'>Delete</a>";
                 } else {

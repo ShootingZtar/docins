@@ -1,9 +1,11 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Home - Final Form</title>
      
-    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" /> -->
     <link rel="stylesheet" href="lib/css/bootstrap.css"/>
     <link rel="stylesheet" href="lib/css/style.css"/>
  
@@ -31,6 +33,8 @@ $action = isset($_GET['action']) ? $_GET['action'] : "";
 switch ($action) {
     case 'deleted' : echo "<div class='alert alert-warning'>Record was deleted.</div>"; break;
     case 'activate' : echo "<div class='alert alert-success'>Record was activated.</div>"; break;
+    case 'create' : echo "<div class='alert alert-success'>Created success.</div>"; break;
+    case 'update' : echo "<div class='alert alert-success'>Updated success.</div>"; break;
 }
  
 $query = "SELECT * FROM form ORDER BY form_last_modified DESC LIMIT :from_record_num, :records_per_page";

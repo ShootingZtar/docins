@@ -13,3 +13,9 @@
 .mt0 {
     margin-top: 0;
 }
+
+tr td:first-child,
+tr td:last-child {
+    width: 1%;
+    white-space: nowrap;
+}

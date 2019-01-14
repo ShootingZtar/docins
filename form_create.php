@@ -1,75 +1,112 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Create Form - Final Form</title>
      
     <link rel="stylesheet" href="lib/css/bootstrap.css"/>
+    <link rel="stylesheet" href="lib/css/style.css"/>
          
 </head>
 <body>
     <div class="container">
         <div class="page-header">
-            <h1>Update Form</h1>
+            <h1>Create Form</h1>
         </div>
-     
-        <?php
-        include 'config/database.php';
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item" aria-current="page"><a href="index.php">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Create Form</li>
+            </ol>
+        </nav>
+        <?php 
+            include 'config/database.php';
 
-        if ($_POST) {
-            $is_dup = false;
-            try {
-                $query = "SELECT * FROM form";
-                $stmt = $con->prepare( $query );
-                $stmt->execute();
-                for ($i=1; $row = $stmt->fetch(PDO::FETCH_ASSOC); $i++) {
-                    if ($_POST['name'] === $row['form_name']) {
-                        $is_dup = true;
+            if ($_POST) {
+
+                $form_name = $_POST['name'];
+                $raw_name_list = $_POST['label_name'];
+                $name_list = [];
+                foreach ($raw_name_list as $l_name) {
+                    if ($l_name != '' && $l_name != NULL) {
+                        array_push($name_list, $l_name);
                     }
                 }
-                
-                $name = $row['form_name'];
-            } catch (PDOException $exception) {
-                die('ERROR: ' . $exception->getMessage());
-            }
 
-            if (!$is_dup) {
-                try {
-                    $query = "INSERT INTO form SET form_name=:name, form_status=:status";
-                    $stmt = $con->prepare($query);
-                    $name=htmlspecialchars(strip_tags($_POST['name']));
-                    $status=1;
-
-                    // bind the parameters
-                    $stmt->bindParam(':name', $name);
-                    $stmt->bindParam(':status', $status);
-                    
-                    // Execute the query
-                    if($stmt->execute()){
-                        echo "<div class='alert alert-success'>Record was updated.</div>";
-                        header( "location: index.php" );
-                    }else{
-                        echo "<div class='alert alert-danger'>Error. Please contact administrator.</div>";
+                if ($form_name !== '' && count($name_list) > 0) {
+                    $query = "INSERT INTO form SET form_name = :form_name";
+                    $stmt = $con->prepare( $query );
+                    $stmt->bindParam(':form_name', $form_name);
+                    try {
+                        $stmt->execute();
+                    } catch (PDOException $exception) {
+                        die('ERROR: ' . $exception->getMessage());
                     }
-                    
-                } catch (PDOException $exception) {
-                    die('ERROR: ' . $exception->getMessage());
+
+                    $query = "SELECT form_id FROM form ORDER BY form_id DESC LIMIT 0,1";
+                    $stmt = $con->prepare( $query );
+                    try {
+                        $stmt->execute();
+                    } catch (PDOException $exception) {
+                        die('ERROR: ' . $exception->getMessage());
+                    }
+                    $form_fetch = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    $last_form_id = $form_fetch['form_id'];
+
+                    $order_arr = [];
+                    $question_marks = str_repeat('( ?, ?, ? ), ', count($name_list)-1) . '( ?, ?, ? )';
+                    $query = "INSERT INTO label (form_id, label_name, label_order) VALUE $question_marks";
+                    $stmt = $con->prepare( $query );
+                    for ($i=0; $i<count($name_list); $i++) {
+                        array_push($order_arr, $i+1);
+                        $form_id_param_index = ( $i * 3 ) + 1;
+                        $label_name_param_index = ( $i * 3 ) + 2;
+                        $label_order_param_index = ( $i * 3 ) + 3;
+
+                        $stmt->bindParam($form_id_param_index, $last_form_id);
+                        $stmt->bindParam($label_name_param_index, $name_list[$i]);
+                        $stmt->bindParam($label_order_param_index, $order_arr[$i]);
+                    }
+                    try {
+                        $stmt->execute();
+                    } catch (PDOException $exception) {
+                        die('ERROR: ' . $exception->getMessage());
+                    }
+                    echo '<META HTTP-EQUIV="Refresh" CONTENT="0;URL=index.php?action=create">';
+                } else {
+                    echo "<div class='alert alert-danger'>Form name can't be blank and should have at least 1 column with data filled.</div>";
                 }
-            } else {
-                echo "<div class='alert alert-warning'>The name is dupplicate. Please try another.</div>";
             }
-        }
         ?>
 
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post">
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post" @submit="checkForm">
             <table class='table table-hover table-responsive table-bordered'>
                 <tr>
                     <td>Name</td>
-                    <td><input type='text' name='name' class='form-control' /></td>
+                    <td colspan='2'><input type='text' name='name' class='form-control' /></td>
+                </tr>
+                <tr v-for="(row, index) in rows">
+                    <td class='text-right'>
+                        # {{ index + 1  }}
+                    </td>
+                    <td>
+                        <input type='text' name='label_name[]' v-model="row.text" class='form-control' />
+                    </td>
+                    <td>
+                        <input type="button" class="btn btn-danger" @click="deleteRow(index)" v-bind:disabled="disable_delete" value="Delete"/>
+                    </td>
                 </tr>
                 <tr>
                     <td></td>
-                    <td>
-                        <input type='submit' value='Save Changes' class='btn btn-primary' />
+                    <td colspan='2'><input type='button' v-bind:value='addRowBtnText' class='btn btn-info'  @click="addRow" /></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td colspan='2'>
+                        <input type='submit' value='Create' class='btn btn-primary' />
                         <a href='index.php' class='btn btn-danger'>Back to Home</a>
                     </td>
                 </tr>
@@ -79,5 +116,54 @@
 
     <script type="text/javascript" src="lib/js/jquery.js"></script>
     <script type="text/javascript" src="lib/js/bootstrap.js"></script>
+    <script type="text/javascript" src="lib/js/vue.js"></script>
+    <script>
+        var vm = new Vue({
+            el: '.container',
+            data: {
+                addRowBtnText: 'Add Row',
+                disable_delete: true,
+                rows: [{text: ''}]
+            },
+            methods: {
+                addRow () {
+                    this.rows.push({
+                        text: ''
+                    })
+                    if (this.rows.length > 1) {
+                        this.disable_delete = false
+                    }
+                },
+                deleteRow(index) {
+                    if (this.rows.length > 1) {
+                        this.rows.splice(index,1)
+                    }
+                    if (this.rows.length <= 1) {
+                        this.disable_delete = true
+                    }
+                },
+                checkForm: function (e) {
+                    this.rows.forEach(function(item, index) {
+                        console.log(index)
+                        console.log(item.text)
+                    })
+                    // if (this.name && this.age) {
+                    // return true;
+                    // }
+
+                    // this.errors = [];
+
+                    // if (!this.name) {
+                    // this.errors.push('Name required.');
+                    // }
+                    // if (!this.age) {
+                    // this.errors.push('Age required.');
+                    // }
+
+                    // e.preventDefault();
+                }
+            }
+        })
+    </script>
 </body>
 </html>
