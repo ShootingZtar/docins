@@ -128,8 +128,6 @@
                 $stmt = $con->prepare( $query );
                 $stmt->bindParam(1, $id);
                 $stmt->execute();
-
-                // $row_count = isset($_GET['r']) ? $_GET['r'] : $stmt->rowCount();
                 
                 $v_arr = [];
                 $v_count = 0;
@@ -148,7 +146,7 @@
         ?>
 
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"] . "?id={$id}");?>" method="post">
-            <table class='table table-hover table-responsive table-bordered'>
+            <table class='table table-hover table-responsive table-bordered content-td-center'>
                 <tr>
                     <td>Name</td>
                     <td colspan='2'><input type='text' name='name' value="<?php echo htmlspecialchars($name, ENT_QUOTES);  ?>" class='form-control' /></td>

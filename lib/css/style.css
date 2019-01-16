@@ -14,8 +14,12 @@
     margin-top: 0;
 }
 
+table {
+    width: 100%;
+}
+
 tr td:first-child,
-tr td:last-child {
+table.content-td-center tr td:last-child {
     width: 1%;
     white-space: nowrap;
 }

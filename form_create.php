@@ -82,8 +82,8 @@
             }
         ?>
 
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post" @submit="checkForm">
-            <table class='table table-hover table-responsive table-bordered'>
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post">
+            <table class='table table-hover table-responsive table-bordered content-td-center'>
                 <tr>
                     <td>Name</td>
                     <td colspan='2'><input type='text' name='name' class='form-control' /></td>
@@ -147,20 +147,6 @@
                         console.log(index)
                         console.log(item.text)
                     })
-                    // if (this.name && this.age) {
-                    // return true;
-                    // }
-
-                    // this.errors = [];
-
-                    // if (!this.name) {
-                    // this.errors.push('Name required.');
-                    // }
-                    // if (!this.age) {
-                    // this.errors.push('Age required.');
-                    // }
-
-                    // e.preventDefault();
                 }
             }
         })
