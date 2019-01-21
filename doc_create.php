@@ -27,13 +27,13 @@
             $id = isset($_GET['id']) ? $_GET['id'] : "";
 
             if ($_POST) {
-                $raw_label_id_list = $_POST['label_id'];
+                $raw_label_key_list = $_POST['label_key'];
                 $raw_data_list = $_POST['data_value'];
-                $label_id_list = [];
+                $label_key_list = [];
                 $data_list = [];
                 for ($i=0; $i<count($raw_data_list); $i++) {
                     if (isset($raw_data_list[$i]) && $raw_data_list[$i] != '' && $raw_data_list[$i] != NULL) {
-                        array_push($label_id_list, $raw_label_id_list[$i]);
+                        array_push($label_key_list, $raw_label_key_list[$i]);
                         array_push($data_list, $raw_data_list[$i]);
                     }
                 }
@@ -51,7 +51,7 @@
 
 
                     $question_marks = str_repeat('( ?, ?, ?, ? ), ', count($data_list)-1) . '( ?, ?, ?, ? )';
-                    $query = "INSERT INTO data (form_id, data_group_id, label_id, data_value) VALUE $question_marks";
+                    $query = "INSERT INTO data (form_id, data_group_id, label_key, data_value) VALUE $question_marks";
                     $stmt = $con->prepare( $query );
                     for ($i=0; $i<count($data_list); $i++) {
                         $index_counter = ( $i * 4 );
@@ -63,7 +63,7 @@
 
                         $stmt->bindParam($index_first, $id);
                         $stmt->bindParam($index_second, $last_data_group_id);
-                        $stmt->bindParam($index_third, $label_id_list[$i]);
+                        $stmt->bindParam($index_third, $label_key_list[$i]);
                         $stmt->bindParam($index_fourth, $data_list[$i]);
                     }
                     try {
@@ -78,7 +78,7 @@
             }
             // end if ($_POST)
 
-            $label_query = "SELECT label_id, label_name FROM label WHERE form_id = ? ORDER BY label_order";
+            $label_query = "SELECT label_key, label_name FROM label WHERE form_id = ? ORDER BY label_order";
             $label_stmt = $con->prepare($label_query);
             $label_stmt->bindParam(1, $id);
             $label_stmt->execute();
@@ -92,7 +92,7 @@
                         echo "<tr>";
                             echo "<td class='text-right'>{$row['label_name']}</td>";
                             echo "<td>";
-                                echo "<input type='hidden' name='label_id[]' value='{$row['label_id']}' class='form-control' />";
+                                echo "<input type='hidden' name='label_key[]' value='{$row['label_key']}' class='form-control' />";
                                 echo "<input type='text' name='data_value[]' class='form-control' />";
                             echo "</td>";
                         echo "</tr>";

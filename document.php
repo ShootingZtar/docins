@@ -63,12 +63,14 @@
                 echo "<th>#</th>";
                 for ($i=1; $row = $stmt->fetch(PDO::FETCH_ASSOC); $i++){
                     echo "<th>{$row['label_name']}</th>";
-                    array_push($order_arr, $row['label_id']);
+                    array_push($order_arr, $row['label_key']);
                 }
                 echo "<th>Actions</th>";
             echo "</tr>";
 
-            $query = "SELECT d.label_id as label_id, d.data_group_id as data_group_id, d.data_value as data_value, dg.data_group_status as data_group_status FROM data as d LEFT JOIN data_group as dg ON d.data_group_id = dg.data_group_id WHERE d.form_id = ? ORDER BY d.data_group_id, d.label_id";
+            // $query = "SELECT d.label_key as label_key, d.data_group_id as data_group_id, d.data_value as data_value, dg.data_group_status as data_group_status, l.label_order FROM data as d INNER JOIN data_group as dg ON (d.data_group_id = dg.data_group_id) INNER JOIN label as l ON (d.label_key=l.label_key) WHERE d.form_id = ? AND dg.data_group_status = 1 ORDER BY d.data_group_id, l.label_order";
+
+            $query = "SELECT d.label_key as label_key, d.data_group_id as data_group_id, d.data_value as data_value, dg.data_group_status as data_group_status, l.label_order FROM data as d INNER JOIN data_group as dg ON (d.data_group_id = dg.data_group_id) INNER JOIN label as l ON (d.label_key=l.label_key) WHERE d.form_id = ? ORDER BY d.data_group_id, l.label_order";
 
             $stmt = $con->prepare($query);
             $stmt->bindParam(1, $id);
@@ -82,7 +84,7 @@
                 for ($i=1; $row = $stmt->fetch(PDO::FETCH_ASSOC); $i++) {
                     // collect data to an array
                     $data_arr[$row['data_group_id']]['status'] = $row['data_group_status'];
-                    $data_arr[$row['data_group_id']][$row['label_id']] = $row['data_value'];
+                    $data_arr[$row['data_group_id']][$row['label_key']] = $row['data_value'];
                 }
 
                 // key of $data_arr maybe start by other
@@ -99,7 +101,7 @@
                         }
                         echo "<td>";
                             if ($data_row['status'] == 1) {
-                                echo "<a href='#' class='btn btn-info m-r-1em'>Do something</a>";
+                                echo "<a href='pdf.php?id={$id}&group={$key}' target='_blank' class='btn btn-info m-r-1em'>Do something</a>";
                                 echo "<a href='doc_update.php?id={$id}&group={$key}' class='btn btn-primary m-r-1em'>Edit</a>";
                                 echo "<a href='#' onclick='delete_doc({$key}, {$id});'  class='btn btn-danger'>Delete</a>";
                             } else {
@@ -113,7 +115,7 @@
                 echo "</table>";
                     
                 // PAGINATION
-                $total_rows = $data_num;
+                $total_rows = count($data_arr);
                 include_once "paging.php";
 
             } else {
@@ -124,8 +126,8 @@
          
     </div> <!-- end .container -->
      
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="lib/js/jquery.js"></script>
+    <script type="text/javascript" src="lib/js/bootstrap.js"></script>
     <script type='text/javascript'>
 
         function delete_doc( doc_id, form_id ){

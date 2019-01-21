@@ -88,18 +88,24 @@
                         }
 
                         $order_arr = [];
-                        $question_marks = str_repeat('( ?, ?, ? ), ', count($name_list)-1) . '( ?, ?, ? )';
-                        $query = "INSERT INTO label (form_id, label_name, label_order) VALUE $question_marks";
+                        $label_key_list = [];
+                        $question_marks = str_repeat('( ?, ?, ?, ? ), ', count($name_list)-1) . '( ?, ?, ?, ? )';
+                        $query = "INSERT INTO label (form_id, label_key, label_name, label_order) VALUE $question_marks";
                         $stmt = $con->prepare( $query );
                         for ($i=0; $i<count($name_list); $i++) {
+                            array_push($label_key_list, str_replace(" ", "_", strtoupper($name_list[$i])));
                             array_push($order_arr, $i+1);
-                            $form_id_param_index = ( $i * 3 ) + 1;
-                            $label_name_param_index = ( $i * 3 ) + 2;
-                            $label_order_param_index = ( $i * 3 ) + 3;
+    
+                            $index_count = $i * 4;
+                            $index_first = $index_count + 1;
+                            $index_second = $index_count + 2;
+                            $index_third = $index_count + 3;
+                            $index_fourth = $index_count + 4;
 
-                            $stmt->bindParam($form_id_param_index, $id);
-                            $stmt->bindParam($label_name_param_index, $name_list[$i]);
-                            $stmt->bindParam($label_order_param_index, $order_arr[$i]);
+                            $stmt->bindParam($index_first, $id);
+                            $stmt->bindParam($index_second, $label_key_list[$i]);
+                            $stmt->bindParam($index_third, $name_list[$i]);
+                            $stmt->bindParam($index_fourth, $order_arr[$i]);
                         }
                         try {
                             $stmt->execute();

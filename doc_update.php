@@ -28,13 +28,13 @@
             $group = isset($_GET['group']) ? $_GET['group'] : "";
 
             if ($_POST) {
-                $query = "UPDATE data SET data_value = :data_value WHERE form_id = :form_id AND label_id = :label_id AND data_group_id = :data_group_id";
-                for ($i=0; $i<count($_POST['label_id']); $i++) {
+                $query = "UPDATE data SET data_value = :data_value WHERE form_id = :form_id AND label_key = :label_key AND data_group_id = :data_group_id";
+                for ($i=0; $i<count($_POST['label_key']); $i++) {
                     $stmt = $con->prepare( $query );
 
                     $stmt->bindParam(':data_value', $_POST['data_value'][$i]);
                     $stmt->bindParam(':form_id', $id);
-                    $stmt->bindParam(':label_id', $_POST['label_id'][$i]);
+                    $stmt->bindParam(':label_key', $_POST['label_key'][$i]);
                     $stmt->bindParam(':data_group_id', $group);
                     
                     if ($stmt->execute()) {
@@ -46,7 +46,7 @@
             }
             // end if ($_POST
 
-            $label_query = "SELECT l.label_id, l.label_name, d.data_value FROM label as l LEFT JOIN data as d ON l.label_id = d.label_id WHERE l.form_id = ? AND d.data_group_id = ? ORDER BY l.label_order";
+            $label_query = "SELECT l.label_key, l.label_name, d.data_value FROM label as l LEFT JOIN data as d ON l.label_key = d.label_key WHERE l.form_id = ? AND d.data_group_id = ? ORDER BY l.label_order";
             $label_stmt = $con->prepare($label_query);
             $label_stmt->bindParam(1, $id);
             $label_stmt->bindParam(2, $group);
@@ -66,7 +66,7 @@
                         echo "<tr>";
                             echo "<td class='text-right'>{$row['label_name']}</td>";
                             echo "<td>";
-                                echo "<input type='hidden' name='label_id[]' value='{$row['label_id']}' class='form-control' />";
+                                echo "<input type='hidden' name='label_key[]' value='{$row['label_key']}' class='form-control' />";
                                 echo "<input type='text' name='data_value[]' value='{$row['data_value']}' class='form-control' />";
                             echo "</td>";
                         echo "</tr>";
